@@ -102,11 +102,7 @@ def process_event(event):
     issue.count_event(event_id=event.id, date=event.datetime_received.date())
 
 
-def listen(
-    sleep_delay,
-    queue_backend,
-    worker_message_count,
-):
+def listen(queue_backend, worker_message_count):
     """
     Listen for incoming events and process them.
 
@@ -135,11 +131,6 @@ def listen(
 
 
 @click.command()
-@click.option(
-    '--sleep-delay',
-    default=20,
-    envvar='PROCESSOR_SLEEP_DELAY',
-)
 @click.option(
     '--queue-name',
     default='sentry_errors',
@@ -174,7 +165,6 @@ def listen(
     envvar='SENTRY_DSN',
 )
 def main(
-    sleep_delay,
     queue_name,
     endpoint_url,
     connect_timeout,
@@ -208,7 +198,6 @@ def main(
     logger.info('Starting processor workers')
     processes = []
     listen_kwargs = {
-        'sleep_delay': sleep_delay,
         'queue_backend': queue_backend,
         'worker_message_count': worker_message_count,
     }

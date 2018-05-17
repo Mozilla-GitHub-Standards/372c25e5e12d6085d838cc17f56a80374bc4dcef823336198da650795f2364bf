@@ -135,7 +135,6 @@ The following environment variables are available for the processor:
 
 | Name | Required? | Default | Description |
 | ---- | --------- | ------- | ----------- |
-| `PROCESSOR_SLEEP_DELAY` | :x: | `20` | Seconds to wait between polling the queue |
 | `SQS_QUEUE_NAME` | :x: | `sentry_errors` | Name of the queue to poll for events. |
 | `SQS_ENDPOINT_URL` | :x: | | Endpoint URL for connection to AWS. Only required for local development. |
 | `PROCESSOR_PROCESS_COUNT` | :x: | System CPU count | Number of worker processes to start |
