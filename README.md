@@ -153,7 +153,6 @@ The following environment variables are available for the watcher:
 | Name | Required? | Default | Description |
 | ---- | --------- | ------- | ----------- |
 | `SES_FROM_EMAIL` | :white_check_mark: | `notifications@sentry.prod.mozaws.net` | Email to use in the From field for notifications |
-| `DATADOG_API_KEY` | :white_check_mark: | | API key for incrementing the healthcheck counter in Datadog via DogStatsD. |
 | `DATADOG_COUNTER_NAME` | :x: | `bec-alerts.watcher.health` | Name of the DogStatsD counter to increment for health checks. |
 | `SES_VERIFY_EMAIL` | :x: | `False` | If True, the watcher will attempt to verify the `SES_VERIFY_EMAIL` via API on startup. Should probably be False in production. |
 | `WATCHER_SLEEP_DELAY` | :x: | `300` | Seconds to wait between checking for new events and alert triggers |

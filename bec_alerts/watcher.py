@@ -121,10 +121,6 @@ class TriggerEvaluator:
     envvar='AWS_READ_TIMEOUT',
 )
 @click.option(
-    '--datadog-api-key',
-    envvar='DATADOG_API_KEY',
-)
-@click.option(
     '--sentry-dsn',
     envvar='SENTRY_DSN',
 )
@@ -148,7 +144,6 @@ def main(
     connect_timeout,
     read_timeout,
     verify_email,
-    datadog_api_key,
     datadog_counter_name,
     sentry_dsn,
 ):
@@ -156,8 +151,7 @@ def main(
     initialize_error_reporting(sentry_dsn)
 
     try:
-        if datadog_api_key:
-            datadog.initialize(api_key=datadog_api_key)
+        datadog.initialize()
 
         if console_alerts:
             alert_backend = ConsoleAlertBackend()
@@ -181,8 +175,7 @@ def main(
         except Exception as err:
             capture_exception('Error evaluating triggers')
         finally:
-            if datadog_api_key:
-                datadog.statsd.increment(datadog_counter_name)
+            datadog.statsd.increment(datadog_counter_name)
 
         if once:
             break
