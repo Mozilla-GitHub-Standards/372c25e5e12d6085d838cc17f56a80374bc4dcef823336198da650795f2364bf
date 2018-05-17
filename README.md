@@ -28,6 +28,7 @@ Prerequisites:
 4. Initialize processor database:
 
    ```sh
+   docker-compose up -d processor-postgres
    docker-compose run processor bec-alerts manage migrate
    ```
 5. Start up services:
