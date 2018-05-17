@@ -17,6 +17,9 @@ from bec_alerts.triggers import get_trigger_classes
 from bec_alerts.utils import latest_nightly_appbuildid
 
 
+logger = logging.getLogger('bec-alerts.watcher')
+
+
 class TriggerEvaluator:
     """
     Creates Triggers from the definitions in bec_alerts.triggers and
@@ -28,12 +31,11 @@ class TriggerEvaluator:
         self.dry_run = dry_run
 
         self.now = timezone.now()
-        self.logger = logging.getLogger('bec-alerts.watcher')
 
     @transaction.atomic
     def run_job(self):
         if self.dry_run:
-            self.logger.info('--dry-run passed; no run logs will be saved.')
+            logger.info('--dry-run passed; no run logs will be saved.')
             self.evaluate_triggers()
         else:
             current_run = TriggerRun(ran_at=self.now, finished=False)
@@ -54,7 +56,7 @@ class TriggerEvaluator:
         else:
             issues = Issue.objects.all()
 
-        self.logger.info(f'Found {len(issues)} issues since last finished run.')
+        logger.info(f'Found {len(issues)} issues since last finished run.')
 
         # Clear caches since we're starting a new run
         latest_nightly_appbuildid.cache_clear()
@@ -63,7 +65,7 @@ class TriggerEvaluator:
         for trigger_class in get_trigger_classes():
             trigger = trigger_class(self.alert_backend, self.dry_run, self.now)
             for issue in issues:
-                self.logger.debug(
+                logger.debug(
                     f'Evaluting {trigger_class.__name__} against issue {issue.fingerprint}.'
                 )
 

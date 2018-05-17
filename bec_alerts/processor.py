@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 
 from bec_alerts.errors import capture_exception, initialize_error_reporting
-from bec_alerts.models import Issue, IssueBucket
+from bec_alerts.models import Issue
 from bec_alerts.queue_backends import SQSQueueBackend
 
 

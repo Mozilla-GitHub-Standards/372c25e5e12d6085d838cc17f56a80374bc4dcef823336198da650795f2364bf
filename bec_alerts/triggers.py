@@ -17,6 +17,9 @@ from django.utils.functional import cached_property
 from bec_alerts.models import IssueBucket, User, UserIssue
 
 
+logger = logging.getLogger('bec-alerts.triggers')
+
+
 class Trigger:
     """
     Parent class for alert triggers. Subclasses should override methods
@@ -48,7 +51,6 @@ class Trigger:
         self.alert_backend = alert_backend
         self.dry_run = dry_run
         self.now = now
-        self.logger = logging.getLogger('bec-alerts.triggers')
 
     @cached_property
     def users(self):
@@ -65,7 +67,7 @@ class Trigger:
     def alert_user(self, user, issue):
         """Send an alert to a user about the given issue."""
         class_name = self.__class__.__name__
-        self.logger.info(
+        logger.info(
             f'Trigger {class_name} alerting user {user.email} of issue {issue.fingerprint}'
         )
 

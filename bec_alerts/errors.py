@@ -8,6 +8,7 @@ import raven
 
 
 reporter = None
+logger = logging.getLogger('bec-alerts.errors')
 
 
 def initialize_error_reporting(sentry_dsn=None):
@@ -42,8 +43,6 @@ class SentryReporter:
 class LoggingReporter:
     """Logs errors to the bec-alerts.errors logger."""
     def capture_exception(self, message):
-        # Create logger here since logging may not be configured at import time.
-        logger = logging.getLogger('bec-alerts.errors')
         if message:
             logger.error(message)
         logger.error(traceback.format_exc())
