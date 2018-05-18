@@ -1,0 +1,10 @@
+A healthcheck event was received in the bec-alerts queue. It worked!
+
+{{ issue.message }}
+{%- for frame in issue.stack_frames|reverse %}
+    at {{ frame.function }}({{ frame.module }}:{{ frame.lineNo|default('', True) }}:{{ frame.colNo|default('', True) }})
+{%- endfor %}
+
+This issue can be viewed in Sentry:
+
+https://sentry.prod.mozaws.net/operations/nightly-js-errors/issues/{{ issue.groupId }}/
