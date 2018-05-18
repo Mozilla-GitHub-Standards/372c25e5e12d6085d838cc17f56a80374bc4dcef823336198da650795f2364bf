@@ -38,15 +38,16 @@ class StaticQueueBackend(QueueBackend):
 
 class SQSQueueBackend(QueueBackend):
     """Listens for incoming events from an Amazon SQS queue."""
+    DEFAULT_QUEUE_NAME = 'sentry_errors'
+
     def __init__(
         self,
-        queue_name,
+        queue_url,
         endpoint_url,
         connect_timeout,
         read_timeout,
     ):
         self.logger = logging.getLogger('bec-alerts.sqs_queue')
-        self.queue_name = queue_name
 
         # If wait time and read_timeout are the same, the connection times out
         # before AWS (or at least localstack) can send us an empty response. A 2
@@ -60,14 +61,17 @@ class SQSQueueBackend(QueueBackend):
             endpoint_url=endpoint_url,
         )
 
-        self.queue_url = self.create_queue()
+        if queue_url:
+            self.queue_url = queue_url
+        else:
+            self.queue_url = self.create_queue()
 
     def create_queue(self, max_attempts=5, sleep_delay=5):
         attempts = 0
         last_error = None
         while attempts < max_attempts:
             try:
-                response = self.sqs.create_queue(QueueName=self.queue_name)
+                response = self.sqs.create_queue(QueueName=self.DEFAULT_QUEUE_NAME)
                 break
             except ClientError as err:
                 last_error = err
