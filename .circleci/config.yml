@@ -3,6 +3,8 @@ jobs:
   build_and_push:
     docker:
       - image: docker:stable
+    environment:
+      COMPOSE_PROJECT_NAME: bec-alerts
     steps:
       - checkout
       - setup_remote_docker
@@ -23,6 +25,27 @@ jobs:
           command: |
             docker info
             docker build -t ${CIRCLE_PROJECT_REPONAME}:build .
+
+      - run:
+          name: Install Docker Compose
+          command: |
+            set -x
+            apk add --no-cache py-pip
+            pip install docker-compose
+
+      - run:
+          name: Run tests
+          command: |
+            docker-compose up -d processor-postgres
+            docker-compose up -d localstack
+            docker run \
+              --network bec-alerts_default \
+              --link bec-alerts_processor-postgres \
+              --link bec-alerts_localstack \
+              --env-file ./docker/processor.env \
+              --tty \
+              --interactive \
+              ${CIRCLE_PROJECT_REPONAME}:build pytest /app
 
       - run:
           name: Push to Dockerhub
