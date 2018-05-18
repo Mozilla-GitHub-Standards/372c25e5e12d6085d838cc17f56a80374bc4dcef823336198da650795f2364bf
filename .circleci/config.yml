@@ -27,15 +27,33 @@ jobs:
       - run:
           name: Push to Dockerhub
           command: |
-            echo "${DOCKER_PASSWORD}" | docker login -u="${DOCKER_USERNAME}" --password-stdin
+            function retry {
+                set +e
+                local n=0
+                local max=3
+                while true; do
+                "$@" && break || {
+                  if [[ $n -lt $max ]]; then
+                    ((n++))
+                    echo "Command failed. Attempt $n/$max:"
+                  else
+                    echo "Failed after $n attempts."
+                    exit 1
+                  fi
+                }
+                done
+                set -e
+            }
+
             export DOCKER_IMAGE="mozilla/${CIRCLE_PROJECT_REPONAME}:latest"
             if [ -n "${CIRCLE_TAG}" ]; then
                 export DOCKER_IMAGE="mozilla/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}"
             fi
 
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-                docker tag "${CIRCLE_PROJECT_REPONAME}:build" "${DOCKER_IMAGE}"
-                docker push "${DOCKER_IMAGE}"
+                echo "${DOCKER_PASSWORD}" | docker login -u="${DOCKER_USERNAME}" --password-stdin
+                retry docker tag "${CIRCLE_PROJECT_REPONAME}:build" "${DOCKER_IMAGE}"
+                retry docker push "${DOCKER_IMAGE}"
             fi
 
 workflows:
