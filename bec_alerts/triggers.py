@@ -137,6 +137,24 @@ class NewNotifyTrigger(Trigger):
 # Add Trigger subclasses below this line ###############################
 
 
+class HealthCheckTrigger(Trigger):
+    """
+    Notify osmose and miles when we receive an event with a magic
+    string.
+    """
+    emails = ['mkelly@mozilla.com', 'mcrabill@mozilla.com']
+    name = 'bec-alerts Healthcheck'
+    enabled = True
+
+    subject_template = '[Firefox Browser Errors] Healthcheck Event Received'
+    template = 'healthcheck.txt'
+
+    def evaluate(self, issue):
+        if 'bec-alerts-healthcheck' in issue.message:
+            for user in self.users:
+                self.alert_user(user, issue)
+
+
 class NewTopIssueTrigger(Trigger):
     """
     Notify users when a new issue they've never been notified about is a

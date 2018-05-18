@@ -162,7 +162,8 @@ The following environment variables are available for the watcher:
 
 - Each time the Watcher process evalutes triggers and potentially sends emails, it increments a counter in Datadog using DogStatsD. This behavior is controlled by the `DATADOG_API_KEY` and `DATADOG_COUNTER_NAME` environment variables.
 
-  This counter can be used to monitor if the watcher is still running,
+  This counter can be used to monitor if the watcher is still running.
+- A health check trigger exists to test the entire flow from an error being submitted to Sentry to an alert email being sent. To trigger it, send an error to Sentry with the string `bec-alerts-healthcheck` in the message field. Ops and dev will be sent an alert email confirming that the event was received and processed successfully.
 
 ## License
 
