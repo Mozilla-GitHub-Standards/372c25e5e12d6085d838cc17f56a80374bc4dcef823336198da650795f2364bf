@@ -60,11 +60,7 @@ def test_listen_works(reraise_errors):
     queue_backend = StaticQueueBackend([
         [sentry_event()],
     ])
-    listen(
-        sleep_delay=0,
-        queue_backend=queue_backend,
-        worker_message_count=1,
-    )
+    listen(queue_backend=queue_backend, worker_message_count=1)
 
 
 @pytest.mark.django_db
@@ -74,11 +70,7 @@ def test_listen_message_count(reraise_errors):
         [sentry_event(fingerprints=['asdf'])],
         [sentry_event(fingerprints=['qwer'])],
     ])
-    listen(
-        sleep_delay=0,
-        queue_backend=queue_backend,
-        worker_message_count=3,
-    )
+    listen(queue_backend=queue_backend, worker_message_count=3)
 
     # The last message should never have been processed
     assert not Issue.objects.filter(fingerprint='qwer').exists()
@@ -92,11 +84,7 @@ def test_listen_ignore_invalid(collect_errors):
         [sentry_event(eventID='badevent', fingerprints=56)],
         [sentry_event(fingerprints=['zxcv'])],
     ])
-    listen(
-        sleep_delay=0,
-        queue_backend=queue_backend,
-        worker_message_count=2,
-    )
+    listen(queue_backend=queue_backend, worker_message_count=2)
 
     assert len(collect_errors.errors) == 1
     error = collect_errors.errors[0]
@@ -126,11 +114,7 @@ def test_listen_processing(reraise_errors):
             sentry_event(fingerprints=['asdf'], date=datetime(2018, 1, 2)),
         ],
     ])
-    listen(
-        sleep_delay=0,
-        queue_backend=queue_backend,
-        worker_message_count=2,
-    )
+    listen(queue_backend=queue_backend, worker_message_count=2)
 
     issue = Issue.objects.get(fingerprint='asdf')
     assert issue.message == 'Fake message'
