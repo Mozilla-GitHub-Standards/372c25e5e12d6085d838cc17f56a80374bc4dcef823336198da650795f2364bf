@@ -80,7 +80,7 @@ jobs:
                 export DOCKER_IMAGE="mozilla/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}"
             fi
 
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            if [ "${CIRCLE_BRANCH}" == "master" ] || [ -n "${CIRCLE_TAG}" ]; then
                 echo "${DOCKER_PASSWORD}" | docker login -u="${DOCKER_USERNAME}" --password-stdin
                 retry docker tag "${CIRCLE_PROJECT_REPONAME}:build" "${DOCKER_IMAGE}"
                 retry docker push "${DOCKER_IMAGE}"
