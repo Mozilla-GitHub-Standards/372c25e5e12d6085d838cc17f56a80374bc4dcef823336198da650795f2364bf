@@ -78,15 +78,23 @@ def test_listen_message_count(reraise_errors):
 
 @pytest.mark.django_db
 def test_listen_ignore_invalid(collect_errors):
+    missing_id = sentry_event()
+    del missing_id['eventID']
+    missing_fingerprints = sentry_event()
+    del missing_fingerprints['fingerprints']
+    missing_message = sentry_event()
+    del missing_message['message']
+
     queue_backend = StaticQueueBackend([
         [sentry_event(fingerprints=['asdf'])],
         # fingerprints must be a list
         [sentry_event(eventID='badevent', fingerprints=56)],
+        [missing_id, missing_fingerprints, missing_message],
         [sentry_event(fingerprints=['zxcv'])],
     ])
     listen(queue_backend=queue_backend, worker_message_count=2)
 
-    assert len(collect_errors.errors) == 1
+    assert len(collect_errors.errors) == 4
     error = collect_errors.errors[0]
     assert error.message == 'Error processing event: badevent'
 
