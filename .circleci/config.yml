@@ -6,6 +6,13 @@ jobs:
     environment:
       COMPOSE_PROJECT_NAME: bec-alerts
     steps:
+      - run:
+          name: Install checkout deps
+          command: |
+            set -x
+            apk update
+            apk add git openssh
+
       - checkout
       - setup_remote_docker
 
