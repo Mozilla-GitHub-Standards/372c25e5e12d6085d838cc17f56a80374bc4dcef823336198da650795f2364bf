@@ -132,9 +132,9 @@ def listen(queue_backend, worker_message_count):
 
 @click.command()
 @click.option(
-    '--queue-name',
-    default='sentry_errors',
-    envvar='SQS_QUEUE_NAME',
+    '--queue-url',
+    default=None,
+    envvar='SQS_QUEUE_URL',
 )
 @click.option(
     '--endpoint-url',
@@ -165,7 +165,7 @@ def listen(queue_backend, worker_message_count):
     envvar='SENTRY_DSN',
 )
 def main(
-    queue_name,
+    queue_url,
     endpoint_url,
     connect_timeout,
     read_timeout,
@@ -186,7 +186,7 @@ def main(
 
     try:
         queue_backend = SQSQueueBackend(
-            queue_name=queue_name,
+            queue_url=queue_url,
             endpoint_url=endpoint_url,
             connect_timeout=connect_timeout,
             read_timeout=read_timeout,

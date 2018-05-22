@@ -136,7 +136,7 @@ The following environment variables are available for the processor:
 
 | Name | Required? | Default | Description |
 | ---- | --------- | ------- | ----------- |
-| `SQS_QUEUE_NAME` | :x: | `sentry_errors` | Name of the queue to poll for events. |
+| `SQS_QUEUE_URL` | :x: | | URL of the queue to poll for events. If not provided, a queue will be created on startup with the default name `sentry_errors`. |
 | `SQS_ENDPOINT_URL` | :x: | | Endpoint URL for connection to AWS. Only required for local development. |
 | `PROCESSOR_PROCESS_COUNT` | :x: | System CPU count | Number of worker processes to start |
 | `PROCESSOR_WORKER_MESSAGE_COUNT` | :x: | `200` | Number of messages a worker should process before terminating; a new worker process is started to take its place. Workers may process slightly more messages than this number before shutting down due to message batching. |
