@@ -22,6 +22,13 @@ class SentryEvent:
     def __init__(self, data):
         self.data = data
 
+        if 'eventID' not in self.data:
+            raise ValueError('EventID not found in event data')
+        elif 'fingerprints' not in self.data:
+            raise ValueError('Fingerprint not found in event data')
+        elif 'message' not in self.data:
+            raise ValueError('Error message not found in event data')
+
         naive_datetime_received = datetime.strptime(data['dateReceived'], '%Y-%m-%dT%H:%M:%S.%fZ')
         self.datetime_received = timezone.make_aware(naive_datetime_received, timezone=timezone.utc)
 
@@ -116,12 +123,11 @@ def listen(queue_backend, worker_message_count):
     while messages_processed < worker_message_count:
         try:
             for event_data in queue_backend.receive_events():
-                event = SentryEvent(event_data)
-                logger.debug(f'Received event ID: {event.id}')
-
                 # The nested try avoids errors on a single event stopping us
                 # from processing the rest of the received events.
                 try:
+                    event = SentryEvent(event_data)
+                    logger.debug(f'Received event ID: {event.id}')
                     process_event(event)
                     messages_processed += 1
                 except Exception as err:
