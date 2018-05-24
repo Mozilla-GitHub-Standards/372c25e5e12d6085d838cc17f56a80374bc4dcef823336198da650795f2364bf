@@ -96,7 +96,7 @@ def test_listen_ignore_invalid(collect_errors):
 
     assert len(collect_errors.errors) == 4
     error = collect_errors.errors[0]
-    assert error.message == 'Error processing event: badevent'
+    assert error.message == 'Error processing event'
 
     # The last event should have been processed since the middle one
     # failed.
