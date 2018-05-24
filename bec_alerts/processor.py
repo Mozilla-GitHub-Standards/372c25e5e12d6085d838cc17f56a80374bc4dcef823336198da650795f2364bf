@@ -131,7 +131,7 @@ def listen(queue_backend, worker_message_count):
                     process_event(event)
                     messages_processed += 1
                 except Exception as err:
-                    capture_exception(f'Error processing event: {event.id}')
+                    capture_exception('Error processing event')
         except Exception as err:
             capture_exception('Error receiving message')
 
