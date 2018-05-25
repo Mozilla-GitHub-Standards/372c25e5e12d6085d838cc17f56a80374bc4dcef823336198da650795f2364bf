@@ -68,7 +68,7 @@ class Trigger:
         """Send an alert to a user about the given issue."""
         class_name = self.__class__.__name__
         logger.info(
-            f'Trigger {class_name} alerting user {user.email} of issue {issue.fingerprint}'
+            f'Trigger {class_name} alerting user {user.email} of issue {issue.group_id}'
         )
 
         alert_body = render_to_string(self.template, {

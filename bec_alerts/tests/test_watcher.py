@@ -52,7 +52,7 @@ def test_evaluator_always(reraise_errors, set_trigger_classes):
     assert alert.to == 'test@example.com'
     assert alert.subject == '[Firefox Browser Errors] Error: AlwaysTest'
     assert 'AlwaysTest' in alert.body
-    assert issue.groupId in alert.body
+    assert issue.group_id in alert.body
 
     user = User.objects.get(email='test@example.com')
     assert user.has_been_notified_about(issue)

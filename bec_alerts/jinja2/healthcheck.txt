@@ -7,4 +7,4 @@ A healthcheck event was received in the bec-alerts queue. It worked!
 
 This issue can be viewed in Sentry:
 
-https://sentry.prod.mozaws.net/operations/nightly-js-errors/issues/{{ issue.groupId }}/
+https://sentry.prod.mozaws.net/operations/nightly-js-errors/issues/{{ issue.group_id }}/

@@ -85,14 +85,10 @@ def manage(manage_args):
     default='Simulated error',
 )
 @click.option(
-    '--fingerprint',
-    default='{{ default }}',
-)
-@click.option(
     '--traceback/--no-traceback',
     default=True,
 )
-def simulate_error(dsn, message, fingerprint, traceback):
+def simulate_error(dsn, message, traceback):
     """
     Generate a Python error and send it to a specified Sentry instance.
     """
@@ -108,7 +104,7 @@ def simulate_error(dsn, message, fingerprint, traceback):
     except Exception:
         err_type, err_value, err_traceback = sys.exc_info()
         exc_info = (err_type, err_value, err_traceback if traceback else None)
-        client.captureException(exc_info=exc_info, fingerprint=[fingerprint])
+        client.captureException(exc_info=exc_info)
     print('Error sent')
 
 

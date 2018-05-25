@@ -24,8 +24,8 @@ class SentryEvent:
 
         if 'eventID' not in self.data:
             raise ValueError('EventID not found in event data')
-        elif 'fingerprints' not in self.data:
-            raise ValueError('Fingerprint not found in event data')
+        elif 'groupID' not in self.data:
+            raise ValueError('GroupID not found in event data')
         elif 'message' not in self.data:
             raise ValueError('Error message not found in event data')
 
@@ -42,17 +42,9 @@ class SentryEvent:
         return self.data['message']
 
     @cached_property
-    def groupId(self):
+    def group_id(self):
         """ID of the issue this event is grouped under."""
         return self.data['groupID']
-
-    @cached_property
-    def fingerprint(self):
-        """
-        Fingerprints are actually an array of values, but we want to
-        treat it as a single hash-like value.
-        """
-        return ':'.join(self.data['fingerprints'])
 
     def get_entry(self, entry_type):
         for entry in self.data.get('entries', []):
@@ -94,9 +86,8 @@ def process_event(event):
     database.
     """
     # Create issue, or update the last_seen date for it
-    issue, created = Issue.objects.get_or_create(fingerprint=event.fingerprint, defaults={
+    issue, created = Issue.objects.get_or_create(group_id=event.group_id, defaults={
         'message': event.message,
-        'groupId': event.groupId,
         'last_seen': event.datetime_received,
         'module': event.module,
         'stack_frames': event.stack_frames,
