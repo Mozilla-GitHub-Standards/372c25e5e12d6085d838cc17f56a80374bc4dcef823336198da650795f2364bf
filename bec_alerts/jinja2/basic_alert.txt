@@ -7,4 +7,4 @@ New alert from Firefox Browser Error trigger: {{ trigger.name }}
 
 This issue can be viewed in Sentry:
 
-https://sentry.prod.mozaws.net/operations/nightly-js-errors/issues/{{ issue.groupId }}/
+https://sentry.prod.mozaws.net/operations/nightly-js-errors/issues/{{ issue.group_id }}/

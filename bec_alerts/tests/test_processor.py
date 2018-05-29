@@ -32,7 +32,6 @@ def sentry_event(date=None, module='resource://fake.jsm', stack_frames=None, **k
         'message': kwargs.get('message', 'Error: fake error'),
         'dateReceived': (date or timezone.now()).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
         'groupID': kwargs.get('groupID', randint(1, 999999)),
-        'fingerprints': kwargs.get('fingerprints', [str(uuid4())]),
         'entries': kwargs.get('entries', [
             {
                 'type': 'exception',
@@ -66,41 +65,39 @@ def test_listen_works(reraise_errors):
 @pytest.mark.django_db
 def test_listen_message_count(reraise_errors):
     queue_backend = StaticQueueBackend([
-        [sentry_event(fingerprints=['asdf']), sentry_event(fingerprints=['asdf'])],
-        [sentry_event(fingerprints=['asdf'])],
-        [sentry_event(fingerprints=['qwer'])],
+        [sentry_event(groupID='asdf'), sentry_event(groupID='asdf')],
+        [sentry_event(groupID='asdf')],
+        [sentry_event(groupID='qwer')],
     ])
     listen(queue_backend=queue_backend, worker_message_count=3)
 
     # The last message should never have been processed
-    assert not Issue.objects.filter(fingerprint='qwer').exists()
+    assert not Issue.objects.filter(group_id='qwer').exists()
 
 
 @pytest.mark.django_db
 def test_listen_ignore_invalid(collect_errors):
     missing_id = sentry_event()
     del missing_id['eventID']
-    missing_fingerprints = sentry_event()
-    del missing_fingerprints['fingerprints']
+    missing_group_id = sentry_event()
+    del missing_group_id['groupID']
     missing_message = sentry_event()
     del missing_message['message']
 
     queue_backend = StaticQueueBackend([
-        [sentry_event(fingerprints=['asdf'])],
-        # fingerprints must be a list
-        [sentry_event(eventID='badevent', fingerprints=56)],
-        [missing_id, missing_fingerprints, missing_message],
-        [sentry_event(fingerprints=['zxcv'])],
+        [sentry_event(groupID='asdf')],
+        [missing_id, missing_group_id, missing_message],
+        [sentry_event(groupID='zxcv')],
     ])
     listen(queue_backend=queue_backend, worker_message_count=2)
 
-    assert len(collect_errors.errors) == 4
+    assert len(collect_errors.errors) == 3
     error = collect_errors.errors[0]
     assert error.message == 'Error processing event'
 
     # The last event should have been processed since the middle one
     # failed.
-    assert Issue.objects.filter(fingerprint='zxcv').exists()
+    assert Issue.objects.filter(group_id='zxcv').exists()
 
 
 @pytest.mark.django_db
@@ -109,9 +106,8 @@ def test_listen_processing(reraise_errors):
         stack_frame()
     ]
     event = sentry_event(
-        fingerprints=['asdf'],
+        groupID='asdf',
         message='Fake message',
-        groupID=7,
         date=datetime(2018, 1, 1),
         module='resource://Browser.jsm',
         stack_frames=stack_frames,
@@ -119,14 +115,13 @@ def test_listen_processing(reraise_errors):
     queue_backend = StaticQueueBackend([
         [
             event,
-            sentry_event(fingerprints=['asdf'], date=datetime(2018, 1, 2)),
+            sentry_event(groupID='asdf', date=datetime(2018, 1, 2)),
         ],
     ])
     listen(queue_backend=queue_backend, worker_message_count=2)
 
-    issue = Issue.objects.get(fingerprint='asdf')
+    issue = Issue.objects.get(group_id='asdf')
     assert issue.message == 'Fake message'
-    assert issue.groupId == '7'
     assert issue.last_seen == aware_datetime(2018, 1, 2)
     assert issue.module == 'resource://Browser.jsm'
     assert issue.stack_frames == stack_frames

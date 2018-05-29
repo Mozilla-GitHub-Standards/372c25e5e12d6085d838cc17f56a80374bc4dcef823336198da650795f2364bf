@@ -66,7 +66,7 @@ class TriggerEvaluator:
             trigger = trigger_class(self.alert_backend, self.dry_run, self.now)
             for issue in issues:
                 logger.debug(
-                    f'Evaluting {trigger_class.__name__} against issue {issue.fingerprint}.'
+                    f'Evaluting {trigger_class.__name__} against issue {issue.group_id}.'
                 )
 
                 # Don't let a single failure block all trigger evaluations
@@ -75,7 +75,7 @@ class TriggerEvaluator:
                 except Exception:
                     capture_exception(
                         f'Error while running trigger {trigger.__name__} against issue '
-                        f'{issue.fingerprint}'
+                        f'{issue.group_id}'
                     )
 
 

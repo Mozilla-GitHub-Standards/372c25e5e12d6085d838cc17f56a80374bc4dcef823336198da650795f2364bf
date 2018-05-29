@@ -22,17 +22,16 @@ class User(models.Model):
 
 class Issue(models.Model):
     """
-    A Sentry issue uniquely identified by a fingerprint.
+    A Sentry issue uniquely identified by a group_id.
 
     Stores data needed to build error alerts for the issue. That data is
     saved the first time we receive an event for this issue.
     """
-    fingerprint = models.CharField(max_length=255, unique=True)
+    group_id = models.CharField(max_length=255, unique=True)
     last_seen = models.DateTimeField(null=True, default=None)
     module = models.CharField(max_length=255, default='')
     stack_frames = JSONField(default=list)
     message = models.CharField(max_length=255, default='')
-    groupId = models.CharField(max_length=255, default='')
 
     def count_event(self, event_id, date):
         bucket, created = IssueBucket.objects.get_or_create(
