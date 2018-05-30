@@ -31,7 +31,7 @@ class Issue(models.Model):
     last_seen = models.DateTimeField(null=True, default=None)
     module = models.CharField(max_length=255, default='')
     stack_frames = JSONField(default=list)
-    message = models.CharField(max_length=255, default='')
+    message = models.TextField(max_length=255, default='')
 
     def count_event(self, event_id, date):
         bucket, created = IssueBucket.objects.get_or_create(
