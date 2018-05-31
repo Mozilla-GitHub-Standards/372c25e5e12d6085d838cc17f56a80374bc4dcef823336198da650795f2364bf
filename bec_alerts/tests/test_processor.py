@@ -1,7 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-from datetime import datetime
+from datetime import date, datetime
 from random import randint
 from uuid import uuid4
 
@@ -9,7 +9,7 @@ import pytest
 from django.utils import timezone
 
 from bec_alerts.processor import listen
-from bec_alerts.models import Issue, IssueBucket
+from bec_alerts.models import Issue
 from bec_alerts.queue_backends import StaticQueueBackend
 from bec_alerts.utils import aware_datetime
 
@@ -23,14 +23,14 @@ def stack_frame(**kwargs):
     }
 
 
-def sentry_event(date=None, module='resource://fake.jsm', stack_frames=None, **kwargs):
+def sentry_event(event_date=None, module='resource://fake.jsm', stack_frames=None, **kwargs):
     """
     Create a mock Sentry event. This only covers attributes we use.
     """
     event = {
         'eventID': kwargs.get('eventID', str(uuid4())),
         'message': kwargs.get('message', 'Error: fake error'),
-        'dateReceived': (date or timezone.now()).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+        'dateReceived': (event_date or timezone.now()).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
         'groupID': kwargs.get('groupID', randint(1, 999999)),
         'entries': kwargs.get('entries', [
             {
@@ -108,14 +108,14 @@ def test_listen_processing(reraise_errors):
     event = sentry_event(
         groupID='asdf',
         message='Fake message',
-        date=datetime(2018, 1, 1),
+        event_date=datetime(2018, 1, 1),
         module='resource://Browser.jsm',
         stack_frames=stack_frames,
     )
     queue_backend = StaticQueueBackend([
         [
             event,
-            sentry_event(groupID='asdf', date=datetime(2018, 1, 2)),
+            sentry_event(groupID='asdf', event_date=datetime(2018, 1, 2)),
         ],
     ])
     listen(queue_backend=queue_backend, worker_message_count=2)
@@ -127,8 +127,10 @@ def test_listen_processing(reraise_errors):
     assert issue.stack_frames == stack_frames
 
     # Check that counts are being bucketed per-date
-    assert IssueBucket.objects.event_count(issue=issue) == 2
-    assert IssueBucket.objects.event_count(issue=issue, start_date=aware_datetime(2018, 1, 2)) == 1
+    assert Issue.objects.filter(pk=issue.pk).event_count() == 2
+    assert Issue.objects.filter(pk=issue.pk).filter_dates(
+        start_date=date(2018, 1, 2),
+    ).event_count() == 1
 
 
 @pytest.mark.django_db

@@ -14,7 +14,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.functional import cached_property
 
-from bec_alerts.models import IssueBucket, User, UserIssue
+from bec_alerts.models import Issue, User, UserIssue
 
 
 logger = logging.getLogger('bec-alerts.triggers')
@@ -164,20 +164,22 @@ class NewTopIssueTrigger(Trigger):
     name = 'New top crasher'
 
     @cached_property
-    def top_issue_counts(self):
+    def top_issues(self):
         now = timezone.now()
         week_ago = now - timedelta(days=7)
-        return IssueBucket.objects.top_issue_counts(
-            start_date=week_ago.date(),
-            limit=10,
+        return (
+            Issue.objects
+            .filter_dates(start_date=week_ago.date())
+            .with_event_counts()
+            .order_by('-event_count')[:10]
         )
 
     def evaluate(self, issue):
         is_top_issue = False
-        for event_count, top_issue in self.top_issue_counts:
+        for top_issue in self.top_issues:
             # Ignore issues with less than 200 events just to avoid
             # problems with new deployments or weird date edge cases.
-            if top_issue == issue and event_count > 200:
+            if top_issue == issue and top_issue.event_count > 200:
                 is_top_issue = True
                 break
 
