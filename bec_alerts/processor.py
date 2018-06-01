@@ -79,6 +79,9 @@ class SentryEvent:
 
         return []
 
+    def __repr__(self):
+        return f'<SentryEvent id={self.id} group_id={self.group_id}>'
+
 
 def process_event(event):
     """
