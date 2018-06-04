@@ -69,7 +69,7 @@ class SentryEvent:
 
     @cached_property
     def module(self):
-        return self.exception.get('module', '')
+        return self.exception.get('module') or ''
 
     @cached_property
     def stack_frames(self):

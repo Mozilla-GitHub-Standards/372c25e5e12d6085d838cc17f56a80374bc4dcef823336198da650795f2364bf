@@ -129,3 +129,16 @@ def test_listen_processing(reraise_errors):
     # Check that counts are being bucketed per-date
     assert IssueBucket.objects.event_count(issue=issue) == 2
     assert IssueBucket.objects.event_count(issue=issue, start_date=aware_datetime(2018, 1, 2)) == 1
+
+
+@pytest.mark.django_db
+def test_listen_processing_null_module(reraise_errors):
+    event = sentry_event(
+        groupID='asdf',
+        module=None,
+    )
+    queue_backend = StaticQueueBackend([[event]])
+    listen(queue_backend=queue_backend, worker_message_count=1)
+
+    issue = Issue.objects.get(group_id='asdf')
+    assert issue.module == ''
