@@ -20,6 +20,29 @@ class User(models.Model):
             return False
 
 
+class EventCount(models.Aggregate):
+    function = 'hll_cardinality'
+    template = 'hll_cardinality(hll_union_agg(%(expressions)s))'
+    output_field = models.FloatField()
+
+
+class IssueQuerySet(models.QuerySet):
+    def with_event_counts(self):
+        return self.annotate(event_count=EventCount('issuebucket__count_set'))
+
+    def event_count(self):
+        return self.aggregate(count=EventCount('issuebucket__count_set'))['count'] or 0
+
+    def filter_dates(self, start_date=None, end_date=None):
+        filters = {}
+        if start_date is not None:
+            filters['issuebucket__date__gte'] = start_date
+        if end_date is not None:
+            filters['issuebucket__date__lte'] = end_date
+
+        return self.filter(**filters)
+
+
 class Issue(models.Model):
     """
     A Sentry issue uniquely identified by a group_id.
@@ -32,6 +55,8 @@ class Issue(models.Model):
     module = models.CharField(max_length=255, default='')
     stack_frames = JSONField(default=list)
     message = models.TextField(default='')
+
+    objects = IssueQuerySet.as_manager()
 
     def count_event(self, event_id, date):
         bucket, created = IssueBucket.objects.get_or_create(
@@ -85,105 +110,11 @@ class HyperLogLogField(models.Field):
         return 'hll'
 
 
-class IssueBucketManager(models.Manager):
-    def event_count(self, issue=None, start_date=None, end_date=None):
-        """
-        Count the total number of unique events seen, filtered by the
-        given parameters.
-
-        :param Issue issue:
-            Only count events for this issue, if given.
-        :param datetime.date start_date:
-            Only count events occurring on or after this date, if given.
-        :param datetime.date end_date:
-            Only count events occurring on or before this date, if
-            given.
-        """
-        with connection.cursor() as cursor:
-            # We need raw SQL to call the postgresql-hll functions
-            query = '''
-                SELECT
-                    hll_cardinality(hll_union_agg(count_set))
-                FROM bec_alerts_issuebucket
-            '''
-
-            where_clauses = []
-            params = {}
-
-            if issue:
-                where_clauses.append('issue_id = %(issue_id)s')
-                params['issue_id'] = issue.id
-
-            if start_date:
-                where_clauses.append('date >= %(start_date)s')
-                params['start_date'] = start_date
-
-            if end_date:
-                where_clauses.append('date <= %(end_date)s')
-                params['end_date'] = end_date
-
-            if where_clauses:
-                query += f'WHERE {" AND ".join(where_clauses)}'
-
-            cursor.execute(query, params)
-            return cursor.fetchone()[0] or 0
-
-    def top_issue_counts(self, start_date=None, end_date=None, limit=10):
-        """
-        Return a list of tuples of (event_count, Issue), ordered by
-        their event count over the requested period in descending order.
-
-        :param datetime.date start_date:
-            Only count events occurring on or after this date, if given.
-        :param datetime.date end_date:
-            Only count events occurring on or before this date, if
-            given.
-        :param limit:
-            Limit the amount of top issues returned.
-        """
-        with connection.cursor() as cursor:
-            where_clauses = []
-            params = {'limit': limit}
-
-            if start_date:
-                where_clauses.append('date >= %(start_date)s')
-                params['start_date'] = start_date
-
-            if end_date:
-                where_clauses.append('date <= %(end_date)s')
-                params['end_date'] = end_date
-
-            where_query = ''
-            if where_clauses:
-                where_query = f'WHERE {" AND ".join(where_clauses)}'
-
-            query = f'''
-                SELECT
-                    issue_id,
-                    hll_cardinality(hll_union_agg(count_set)) AS event_count
-                FROM bec_alerts_issuebucket
-                {where_query}
-                GROUP BY issue_id
-                ORDER BY event_count DESC
-                LIMIT %(limit)s
-            '''
-
-            cursor.execute(query, params)
-            rows = cursor.fetchall()
-
-            issue_ids = [row[0] for row in rows]
-            issues_by_id = {issue.id: issue for issue in Issue.objects.filter(id__in=issue_ids)}
-
-            return [(row[1], issues_by_id[row[0]]) for row in rows]
-
-
 class IssueBucket(models.Model):
     """Bucket for storing event counts per-issue, bucketed per-day."""
     issue = models.ForeignKey(Issue, on_delete=models.CASCADE)
     date = models.DateField(default=timezone.now)
     count_set = HyperLogLogField()
-
-    objects = IssueBucketManager()
 
     class Meta:
         unique_together = ['issue', 'date']
