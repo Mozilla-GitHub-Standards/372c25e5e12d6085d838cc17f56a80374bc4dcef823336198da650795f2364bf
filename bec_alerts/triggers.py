@@ -169,6 +169,7 @@ class NewTopIssueTrigger(Trigger):
         week_ago = now - timedelta(days=7)
         return (
             Issue.objects
+            .exclude(module__startswith='moz-extension')
             .filter_dates(start_date=week_ago.date())
             .with_event_counts()
             .order_by('-event_count')[:10]
